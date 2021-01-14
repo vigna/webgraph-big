@@ -1,0 +1,14 @@
+- Better toString() for graphs
+
+- There are ImmutableGraph.loadOnce() around, which just throw exceptions.
+
+- The successorBigArray() heuristic should be implemented in arc-labelled graphs, too.
+
+- Eliminate offline variable from Transform.main() and streamline load process.
+
+- The HyperBall localCheckList system should use a big set and a big array.
+
+- Fix IntegerTriplesArcLabelledImmutableGraph to have long elements.
+
+- Lazy iteration through batches for batch labelled graphs.
+

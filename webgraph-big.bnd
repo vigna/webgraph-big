@@ -1,0 +1,5 @@
+Automatic-Module-Name: it.unimi.dsi.big.webgraph
+Bundle-Name: it.unimi.dsi.big.webgraph
+Bundle-SymbolicName: it.unimi.dsi.big.webgraph
+Export-Package: it.unimi.dsi.big.webgraph.*
+Bundle-Version: ${version}
