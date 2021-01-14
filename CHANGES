@@ -1,0 +1,188 @@
+3.6.6
+
+- Now ScatteredArcsASCIIGraph propagates BatchGraph's copiable iterators.
+  As a consequence, compression will happen in parallel when possible.
+
+- Now ScattereArcsASCIIGraph accepts functions on byte arrays.
+
+3.6.5
+
+- Updated licensing info in the POM.
+
+3.6.4
+
+- Removed (almost) unused dependencies.
+
+- Upgraded to newest versions of Apache Commons.
+
+- The command-line options of Transform now are the same as those
+  of the standard version.
+
+3.6.3
+
+- OSGi metadata and default modularization.
+
+- Manual reduction in strength in arithmetic operations everywhere.
+
+3.6.2
+
+- WebGraph (big) is now dually licensed under the Lesser GNU Public
+  License 2.1+ or the Apache Software License 2.0.
+
+- Added automatic module name.
+
+3.6.1
+
+- Ported ImmutableSubgraph from the standard version (thanks to
+  Antoine Pietri for providing the port).
+
+- New skip() method with long argument in NodeIterator.
+
+3.6.0
+
+- Ported from the standard version parallel compression based on the
+  notion of "copiable iterators". Implemented in BVGraph and all
+  derivative classes (e.g., transposed graphs).
+
+- Transform provides direct support to compute efficiently the simple version
+  of a graph, either directly or via a precomputed transpose.
+
+3.5.3
+
+- Fixed SLF4J dependencies (again).
+
+3.5.2
+
+- Fixed build.xml: moved to Java 9 (following Sux4J), and now use the
+  classifier in naming artifacts.
+
+3.5.1
+
+- ScatteredArcsASCIIGraph was checking size() instead of trying
+  size64() on the provided function. Thanks to Thibault Allançon
+  for reporting this bug.
+
+- ScatteredArcsASCIIGraph can now accept zipped files. Thanks to Thibault
+  Allançon for implementing this feature.
+
+- BVGraph will use EliasFanoMonotoneLongBigList16 when necessary.
+
+3.5.0
+
+- Java 8-only.
+
+- Fixed obscure bug in ShiftByOneArcListASCIIGraph: if the arc list
+  was specified on the command line (no -1 option) and more than
+  one core was available, the graph would have not been shifted.
+  Thanks to Luca Prigioniero for reporting this bug.
+
+3.3.6
+
+- The family of loadSequential() methods have been deprecated, and
+  replaced in code by loadOffline() or loadMapped().
+
+3.3.5
+
+- Fixed dependencies.
+
+3.3.4
+
+- Significantly improved performance of HyperBall on graphs with a highly
+  skewed (e.g., heavy-tailed) outdegree distribution (e.g., transposed web
+  graphs).
+
+- Fixed wrong estimation of memory used.
+
+- Now ConnectedComponents writes results using "wcc" instead of "scc".
+
+3.3.3
+
+- Regressed to fastutil's quicksort calls in case of array fragments. Java
+  7's Arrays.sort() has a memory bug that was killing the performance of a
+  number of methods.
+
+3.3.2
+
+- We now distribute SpeedTest, hoping to improve the quality of benchmarks
+  in the literature.
+
+3.3.1
+
+- Adapted to new DSI utilities.
+
+3.3.0
+
+- HyperBall sports a new adaptive decomposition scheme that 
+  is based on the number of arcs to be scanned, rather than
+  on the number of nodes.
+
+- Fixed bug in the computation of the buckets. If you have used the new
+  iterative implementation of Tarjan's algorithm
+  (StronglyConnectedComponents) to compute buckets please recompute them.
+
+- ParallelBreadthFirstVisit and ConnectedComponents have been ported
+  from the standard version.
+
+3.2.1
+
+- New iterative implementation of Tarjan's algorithm.
+
+- HyperBall can now compute Nieminen's centrality.
+
+- Added missing shift option to ArcListASCIIGraph.
+
+3.2.0
+
+- New selectable upper bound for EFGraph makes it possible to build
+  "fake" graphs in which successors are greater than or equal to
+  the number of nodes (this was already possible with BVGraph). Useful
+  for incremental graph construction.
+
+- New IncrementalImmutableSequentialGraph adapter, which provides an
+  inversion of control for storing graphs: you supply, one at a time,
+  the successor list of each node.
+
+3.1.0
+
+- We switched to SLF4J for logging.
+
+- Now ScatteredArcsASCIIGraph accepts a translation function from
+  node identifiers to node numbers.
+
+- The DecimalFormat object used to print data is has now a fixed US locale.
+
+- New EFGraph implementation using the Elias-Fano representation of
+  monotone sequences. Compression is not so good, but successor
+  enumeration is blazingly fast and the implementation returns a skippable
+  iterator which provides constant-time search of nodes by lower bound.
+
+- Both BVGraph and EFGraph have outdegree caching and exact unwrapping
+  of successorArray(). This should bring performance improvements.
+
+- New HyperBall implementation of the HyperANF idea ported to this
+  version. It computes several kind of geometric centrality and once in
+  systolic local mode uses time proportional to the number of edges
+  causing a modification, setting in practice the expected run time to the
+  theoretical bound O(m log n).
+
+- Several wrong instances of "int" have been replaced with "long".
+
+3.0.3
+
+- New ImmutableGraph.outdegrees() method that exposes the outdegrees of a
+  graph as a LongIterator.
+
+- RandomGraph removed.
+
+- Almost all transformed graphs now support copy().
+
+- New Transform.NodeClassFilter.
+
+3.0.1
+
+- ASCIIGraph was parsing the number of nodes as an integer rather than a
+  long. Thanks to David Gleich for reporting this bug.
+
+3.0
+
+- First public release.
