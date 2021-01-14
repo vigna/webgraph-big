@@ -5,6 +5,8 @@
 
 - Now ScattereArcsASCIIGraph accepts functions on byte arrays.
 
+- Official support starts now at Java 9.
+
 3.6.5
 
 - Updated licensing info in the POM.
