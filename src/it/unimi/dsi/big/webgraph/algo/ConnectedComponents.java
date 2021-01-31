@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2020 Sebastiano Vigna
+ * Copyright (C) 2013-2021 Sebastiano Vigna
  *
  * This program and the accompanying materials are made available under the
  * terms of the GNU Lesser General Public License v2.1 or later,
@@ -20,7 +20,7 @@ package it.unimi.dsi.big.webgraph.algo;
 import static it.unimi.dsi.fastutil.BigArrays.get;
 
 /*
- * Copyright (C) 2011-2020 Sebastiano Vigna
+ * Copyright (C) 2011-2021 Sebastiano Vigna
  *
  * This program and the accompanying materials are made available under the
  * terms of the GNU Lesser General Public License v2.1 or later,
