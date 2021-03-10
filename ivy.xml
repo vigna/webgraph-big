@@ -9,16 +9,16 @@
 	</configurations>
 	
 	<dependencies>
+		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.30" force="true"/>
+		<dependency org="ch.qos.logback" name="logback-core" rev="1.2.3" conf="runtime" force="true"/>
+		<dependency org="ch.qos.logback" name="logback-classic" rev="1.2.3" conf="runtime" force="true"/>
 
 		<dependency org="it.unimi.di" name="jsap" rev="20210129"/>
-		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.30" force="true"/>
 		<dependency org="it.unimi.dsi" name="fastutil" rev="latest.release" />
 		<dependency org="it.unimi.dsi" name="dsiutils" rev="latest.release" />
 		<dependency org="it.unimi.dsi" name="webgraph" rev="latest.release" />
 		<dependency org="it.unimi.dsi" name="sux4j" rev="latest.release" />
 		<dependency org="junit" name="junit" rev="latest.release" conf="test"/>
 
-		<dependency org="ch.qos.logback" name="logback-core" rev="1.2.3" conf="runtime" force="true"/>
-		<dependency org="ch.qos.logback" name="logback-classic" rev="1.2.3" conf="runtime" force="true"/>
 	</dependencies>
 </ivy-module>
