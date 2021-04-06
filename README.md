@@ -9,4 +9,10 @@ This big version of WebGraph can manage graphs as large as your core memory
 allows. For graphs with less than 2^31 nodes, have a look at the [standard
 version](https://github.com/vigna/webgraph).
 
+Building
+--------
+
+You need [Ant](https://ant.apache.org/) and [Ivy](https://ant.apache.org/ivy/).
+Then, run `ant ivy-setupjars jar`.
+
 seba (<mailto:sebastiano.vigna@unimi.it>)
