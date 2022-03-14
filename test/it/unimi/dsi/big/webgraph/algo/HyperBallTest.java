@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2021 Paolo Boldi & Sebastiano Vigna
+ * Copyright (C) 2010-2022 Paolo Boldi & Sebastiano Vigna
  *
  * This program and the accompanying materials are made available under the
  * terms of the GNU Lesser General Public License v2.1 or later,
@@ -37,7 +37,7 @@ import it.unimi.dsi.webgraph.ArrayListMutableGraph;
 import it.unimi.dsi.webgraph.Transform;
 import it.unimi.dsi.webgraph.examples.ErdosRenyiGraph;
 /*
- * Copyright (C) 2011-2021 Sebastiano Vigna
+ * Copyright (C) 2011-2022 Sebastiano Vigna
  *
  * This program and the accompanying materials are made available under the
  * terms of the GNU Lesser General Public License v2.1 or later,
