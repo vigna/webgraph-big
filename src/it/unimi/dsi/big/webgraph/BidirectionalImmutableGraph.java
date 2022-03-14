@@ -20,15 +20,15 @@ package it.unimi.dsi.big.webgraph;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 
 /**
- * A wrapper class exhibiting a {@linkplain #graph} and its {@linkplain #transpose} as a
- * bidirectional graph. Methods such as {@link #predecessors(long)}, {@link #indegrees()}, etc. are
- * implemented using the transpose.
+ * A wrapper class exhibiting a {@linkplain #forward graph} and its {@linkplain #backward transpose}
+ * as a bidirectional graph. Methods such as {@link #predecessors(long)}, {@link #indegrees()}, etc.
+ * are implemented using the transpose.
  */
 public class BidirectionalImmutableGraph extends ImmutableGraph {
 	/** A graph. */
-	public final ImmutableGraph graph;
-	/** The transpose of {@link #graph}. */
-	public final ImmutableGraph transpose;
+	public final ImmutableGraph forward;
+	/** The transpose of {@link #forward}. */
+	public final ImmutableGraph backward;
 
     /**
 	 * Creates a bidirectional immutable graph.
@@ -37,47 +37,47 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 * @param transpose its transpose.
 	 */
 	public BidirectionalImmutableGraph(final ImmutableGraph graph, final ImmutableGraph transpose) {
-		this.graph = graph;
-		this.transpose = transpose;
-		if (graph.numNodes() != transpose.numNodes()) throw new IllegalArgumentException("The graph and its transpose graph have a different number of nodes");
-		if (graph.numArcs() != transpose.numArcs()) throw new IllegalArgumentException("The graph and its transpose graph have a different number of arcs");
+		this.forward = graph;
+		this.backward = transpose;
+		if (graph.numNodes() != transpose.numNodes()) throw new IllegalArgumentException("The graph and its transpose have a different number of nodes");
+		if (graph.numArcs() != transpose.numArcs()) throw new IllegalArgumentException("The graph and its transpose have a different number of arcs");
     }
 
     @Override
     public long numNodes() {
-		return this.graph.numNodes();
+		return this.forward.numNodes();
     }
 
     @Override
     public long numArcs() {
-		return this.graph.numArcs();
+		return this.forward.numArcs();
     }
 
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @implSpec This methods returns true if both {@link #graph} and {@link #transpose} provide random
+	 * @implSpec This methods returns true if both {@link #forward} and {@link #backward} provide random
 	 *           access.
 	 */
     @Override
     public boolean randomAccess() {
-		return this.graph.randomAccess() && this.transpose.randomAccess();
+		return this.forward.randomAccess() && this.backward.randomAccess();
     }
 
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @implSpec This methods returns true if both {@link #graph} and {@link #transpose} have copiable
+	 * @implSpec This methods returns true if both {@link #forward} and {@link #backward} have copiable
 	 *           iterators.
 	 */
     @Override
     public boolean hasCopiableIterators() {
-		return graph.hasCopiableIterators() && transpose.hasCopiableIterators();
+		return forward.hasCopiableIterators() && backward.hasCopiableIterators();
     }
 
     @Override
     public BidirectionalImmutableGraph copy() {
-		return new BidirectionalImmutableGraph(this.graph.copy(), this.transpose.copy());
+		return new BidirectionalImmutableGraph(this.forward.copy(), this.backward.copy());
     }
 
     /**
@@ -91,7 +91,7 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 * @return a view on the transpose of this bidirectional graph.
 	 */
     public BidirectionalImmutableGraph transpose() {
-		return new BidirectionalImmutableGraph(transpose, graph);
+		return new BidirectionalImmutableGraph(backward, forward);
     }
 
     /**
@@ -102,14 +102,14 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 *          access, please make a {@linkplain #copy() copy}.
 	 *
 	 * @implSpec This methods returns the (lazy)
-	 *           {@linkplain Transform#union(ImmutableGraph, ImmutableGraph) union} of the graph and its
-	 *           transpose. This is equivalent to forgetting the directionality of the arcs: the
-	 *           successors of a node are also its predecessors.
+	 *           {@linkplain Transform#union(ImmutableGraph, ImmutableGraph) union} of {@link #forward}
+	 *           and {@link #backward}. This is equivalent to forgetting the directionality of the arcs:
+	 *           the successors of a node are also its predecessors.
 	 *
 	 * @return the symmetrized version of this bidirectional graph.
 	 */
     public BidirectionalImmutableGraph symmetrize() {
-		final ImmutableGraph symmetric = Transform.union(graph, transpose);
+		final ImmutableGraph symmetric = Transform.union(forward, backward);
         return new BidirectionalImmutableGraph(symmetric, symmetric);
     }
 
@@ -121,14 +121,14 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 *          access, please make a {@linkplain #copy() copy}.
 	 *
 	 * @implSpec This methods returns the (lazy) result of
-	 *           {@linkplain Transform#simplify(ImmutableGraph, ImmutableGraph)} on the graph and its
-	 *           transpose. Beside forgetting directionality of the arcs, as in {@link #symmetrize()},
-	 *           loops are removed.
+	 *           {@linkplain Transform#simplify(ImmutableGraph, ImmutableGraph)} on {@link #forward} and
+	 *           {@link #backward}. Beside forgetting directionality of the arcs, as in
+	 *           {@link #symmetrize()}, loops are removed.
 	 *
 	 * @return the simple (symmetric and loopless) version of this bidirectional graph.
 	 */
     public BidirectionalImmutableGraph simplify() {
-		final ImmutableGraph simplified = Transform.simplify(graph, transpose);
+		final ImmutableGraph simplified = Transform.simplify(forward, backward);
         return new BidirectionalImmutableGraph(simplified, simplified);
     }
 
@@ -136,34 +136,34 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 * {@inheritDoc}
 	 *
 	 * @implSpec This implementation just invokes {@link ImmutableGraph#outdegree(long)} on
-	 *           {@link #graph}.
+	 *           {@link #forward}.
 	 */
     @Override
     public long outdegree(final long l) {
-		return graph.outdegree(l);
+		return forward.outdegree(l);
     }
 
 	/**
 	 * {@inheritDoc}
 	 *
 	 * @implSpec This implementation just invokes {@link ImmutableGraph#successors(long)} on
-	 *           {@link #graph}.
+	 *           {@link #forward}.
 	 */
 	@Override
 	public LazyLongIterator successors(final long nodeId) {
-		return graph.successors(nodeId);
+		return forward.successors(nodeId);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 *
 	 * @implSpec This implementation just invokes {@link ImmutableGraph#successorBigArray(long)} on
-	 *           {@link #graph}.
+	 *           {@link #forward}.
 	 */
 
 	@Override
 	public long[][] successorBigArray(final long x) {
-		return graph.successorBigArray(x);
+		return forward.successorBigArray(x);
 	}
 
 	/**
@@ -174,7 +174,7 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 */
 
 	public long indegree(final long x) {
-		return transpose.outdegree(x);
+		return backward.outdegree(x);
     }
 
 	/**
@@ -182,13 +182,13 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 * returned.
 	 *
 	 * @implSpec This implementation just invokes {@link ImmutableGraph#successors(long)} on
-	 *           {@link #transpose}.
+	 *           {@link #backward}.
 	 *
 	 * @param x a node.
 	 * @return a lazy iterator over the predecessors of the node.
 	 */
 	public LazyLongIterator predecessors(final long x) {
-		return transpose.successors(x);
+		return backward.successors(x);
     }
 
 	/**
@@ -200,25 +200,25 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 * valid data.
 	 *
 	 * @implSpec This implementation just invokes {@link ImmutableGraph#successorBigArray(long)} on
-	 *           {@link #transpose}.
+	 *           {@link #backward}.
 	 *
 	 * @param x a node.
 	 * @return a big array whose first elements are the successors of the node; the array must not be
 	 *         modified by the caller.
 	 */
 	public long[][] predecessorBigArray(final long x) {
-		return transpose.successorBigArray(x);
+		return backward.successorBigArray(x);
     }
 
 	/**
 	 * Returns an iterator enumerating the outdegrees of the nodes of this graph.
 	 *
 	 * @implSpec This implementation just invokes {@link ImmutableGraph#outdegrees()} on
-	 *           {@link #transpose}.
+	 *           {@link #backward}.
 	 *
 	 * @return an iterator enumerating the outdegrees of the nodes of this graph.
 	 */
     public LongIterator indegrees() {
-		return transpose.outdegrees();
+		return backward.outdegrees();
     }
 }
