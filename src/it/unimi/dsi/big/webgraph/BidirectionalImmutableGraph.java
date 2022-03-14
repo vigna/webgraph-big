@@ -85,7 +85,8 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 * vice-versa.
 	 *
 	 * @apiNote Note that the returned {@link BidirectionalImmutableGraph} is just a view. Thus, it
-	 *          cannot be accessed concurrently with this bidirectional graph.
+	 *          cannot be accessed concurrently with this bidirectional graph. If you need concurrent
+	 *          access, please make a {@linkplain #copy() copy}.
 	 *
 	 * @return a view on the transpose of this bidirectional graph.
 	 */
@@ -97,7 +98,8 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 * Returns a view on the symmetrized version of this bidirectional graph.
 	 *
 	 * @apiNote Note that the returned {@link BidirectionalImmutableGraph} is just a view. Thus, it
-	 *          cannot be accessed concurrently with this bidirectional graph.
+	 *          cannot be accessed concurrently with this bidirectional graph. If you need concurrent
+	 *          access, please make a {@linkplain #copy() copy}.
 	 *
 	 * @implSpec This methods returns the (lazy)
 	 *           {@linkplain Transform#union(ImmutableGraph, ImmutableGraph) union} of the graph and its
@@ -115,7 +117,8 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 	 * Returns a view on the simple (loopless and symmetric) version of this bidirectional graph.
 	 *
 	 * @apiNote Note that the returned {@link BidirectionalImmutableGraph} is just a view. Thus, it
-	 *          cannot be accessed concurrently with this bidirectional graph.
+	 *          cannot be accessed concurrently with this bidirectional graph. If you need concurrent
+	 *          access, please make a {@linkplain #copy() copy}.
 	 *
 	 * @implSpec This methods returns the (lazy) result of
 	 *           {@linkplain Transform#simplify(ImmutableGraph, ImmutableGraph)} on the graph and its
