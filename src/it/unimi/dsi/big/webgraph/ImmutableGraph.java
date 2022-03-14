@@ -312,18 +312,18 @@ public abstract class ImmutableGraph implements FlyweightPrototype<ImmutableGrap
 	}
 
 	/**
-	 * Returns a reference to an array containing the successors of a given node.
+	 * Returns a reference to a big array containing the successors of a given node.
 	 *
 	 * <P>
-	 * The returned array may contain more entries than the outdegree of <code>x</code>. However, only
-	 * those with indices from 0 (inclusive) to the outdegree of <code>x</code> (exclusive) contain
+	 * The returned big array may contain more entries than the outdegree of <code>x</code>. However,
+	 * only those with indices from 0 (inclusive) to the outdegree of <code>x</code> (exclusive) contain
 	 * valid data.
 	 *
 	 * @implSpec This implementation just unwraps the iterator returned by {@link #successors(long)}.
 	 *           Subclasses are encouraged to override this implementation.
 	 *
 	 * @param x a node.
-	 * @return an array whose first elements are the successors of the node; the array must not be
+	 * @return a big array whose first elements are the successors of the node; the array must not be
 	 *         modified by the caller.
 	 */
 	public long[][] successorBigArray(final long x) {
