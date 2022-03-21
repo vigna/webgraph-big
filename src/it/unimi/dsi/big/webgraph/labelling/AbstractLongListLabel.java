@@ -45,7 +45,7 @@ public abstract class AbstractLongListLabel extends AbstractLabel implements Lab
      * @param key the (only) key of this label.
      * @param value the value of this label.
      */
-    public AbstractLongListLabel(String key, long[] value) {
+    public AbstractLongListLabel(final String key, final long[] value) {
         this.key = key;
         this.value = value;
     }
@@ -60,10 +60,13 @@ public abstract class AbstractLongListLabel extends AbstractLabel implements Lab
         return new String[]{key};
     }
 
-    public Class<?>[] attributeTypes() { return new Class<?>[] { long[].class }; }
+	@Override
+	public Class<?>[] attributeTypes() {
+		return new Class<?>[] { long[].class };
+	}
 
     @Override
-    public Object get(String key) {
+    public Object get(final String key) {
         if (this.key.equals(key))
             return value;
         throw new IllegalArgumentException();
@@ -80,7 +83,7 @@ public abstract class AbstractLongListLabel extends AbstractLabel implements Lab
     }
 
     @Override
-    public boolean equals(Object x) {
+    public boolean equals(final Object x) {
         if (x instanceof AbstractLongListLabel)
             return Arrays.equals(value, ((AbstractLongListLabel) x).value);
         else

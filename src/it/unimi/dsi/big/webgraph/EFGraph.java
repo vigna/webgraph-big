@@ -58,12 +58,12 @@ import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import it.unimi.dsi.fastutil.longs.LongBigList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongMappedBigList;
 import it.unimi.dsi.io.InputBitStream;
 import it.unimi.dsi.io.OutputBitStream;
 import it.unimi.dsi.lang.ObjectParser;
 import it.unimi.dsi.logging.ProgressLogger;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList;
-import it.unimi.dsi.util.ByteBufferLongBigList;
 import it.unimi.dsi.webgraph.LazyIntSkippableIterator;
 
 /** An immutable graph based on the Elias&ndash;Fano representation of monotone sequences.
@@ -708,7 +708,7 @@ public class EFGraph extends ImmutableGraph {
 
 		final FileInputStream graphIs = new FileInputStream(basename + GRAPH_EXTENSION);
 		final LongBigList graph;
-		if (mapped) graph = ByteBufferLongBigList.map(graphIs.getChannel(), byteOrder);
+		if (mapped) graph = LongMappedBigList.map(graphIs.getChannel(), byteOrder);
 		else {
 			if (pl != null) {
 				pl.itemsName = "bytes";
@@ -1181,7 +1181,7 @@ public class EFGraph extends ImmutableGraph {
 
 	@Override
 	public EFGraph copy() {
-		return new EFGraph(basename, n, m, upperBound, log2Quantum, graph instanceof ByteBufferLongBigList ? ((ByteBufferLongBigList)graph).copy() : graph, offsets);
+		return new EFGraph(basename, n, m, upperBound, log2Quantum, graph instanceof LongMappedBigList ? ((LongMappedBigList)graph).copy() : graph, offsets);
 	}
 
 	public static void main(final String args[]) throws SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, JSAPException, ClassNotFoundException, InstantiationException {
