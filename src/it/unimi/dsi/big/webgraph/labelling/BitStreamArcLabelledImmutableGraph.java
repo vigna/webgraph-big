@@ -37,10 +37,12 @@ import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.io.BinIO;
 import it.unimi.dsi.fastutil.io.FastMultiByteArrayInputStream;
 import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongBigList;
 import it.unimi.dsi.io.InputBitStream;
 import it.unimi.dsi.io.OutputBitStream;
 import it.unimi.dsi.lang.ObjectParser;
 import it.unimi.dsi.logging.ProgressLogger;
+import it.unimi.dsi.sux4j.util.EliasFanoMonotoneBigLongBigList;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList;
 
 /** A labelled graph storing its labels as a bit stream.
@@ -119,7 +121,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 	/** The basename of this graph (required for offline access). */
 	protected final CharSequence basename;
 	/** The offset array, or <code>null</code> for sequential access. */
-	protected final EliasFanoMonotoneLongBigList offset;
+	protected final LongBigList offset;
 
 	/** Builds a new labelled graph using a bit stream of labels.
 	 *
@@ -131,7 +133,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 	 * @param labelStream if <code>byteArray</code> is <code>null</code>, this stream is used as the bit stream of labels.
 	 * @param offset the offset array for random access, or <code>null</code>.
 	 */
-	protected BitStreamArcLabelledImmutableGraph(final CharSequence basename, final ImmutableGraph g, final Label prototype, final byte[] byteArray, final FastMultiByteArrayInputStream labelStream, final EliasFanoMonotoneLongBigList offset) {
+	protected BitStreamArcLabelledImmutableGraph(final CharSequence basename, final ImmutableGraph g, final Label prototype, final byte[] byteArray, final FastMultiByteArrayInputStream labelStream, final LongBigList offset) {
 		this.g = g;
 		this.byteArray = byteArray;
 		this.labelStream = labelStream;
@@ -334,7 +336,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 
 		byte[] byteArray = null;
 		FastMultiByteArrayInputStream labelStream = null;
-		EliasFanoMonotoneLongBigList offsets = null;
+		LongBigList offsets = null;
 
 		if (method != LoadMethod.OFFLINE) {
 			if (pl != null) {
@@ -360,31 +362,18 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 				}
 				final InputBitStream offsetStream = new InputBitStream(basename + LABEL_OFFSETS_EXTENSION);
 
-				offsets = new EliasFanoMonotoneLongBigList(g.numNodes() + 1, size * Byte.SIZE + 1, new LongIterator() {
-					private long off;
-					private int i;
-
-					@Override
-					public boolean hasNext() {
-						return i <= g.numNodes();
-					}
-					@Override
-					public long nextLong() {
-						i++;
-						try {
-							return off = offsetStream.readLongGamma() + off;
-						}
-						catch (final IOException e) {
-							throw new RuntimeException(e);
-						}
-					}
-				});
+				offsets = (EliasFanoMonotoneLongBigList.fits(g.numNodes() + 1, size * Byte.SIZE + 1)) ?
+						new EliasFanoMonotoneLongBigList(g.numNodes() + 1, size * Byte.SIZE + 1, new OffsetsLongIterator(g, offsetStream)) :
+						new EliasFanoMonotoneBigLongBigList(g.numNodes() + 1, size * Byte.SIZE + 1, new OffsetsLongIterator(g, offsetStream));
 
 				offsetStream.close();
 				if (pl != null) {
 					pl.count = g.numNodes() + 1;
 					pl.done();
-					pl.logger().info("Label pointer bits per node: " + offsets.numBits() / (g.numNodes() + 1.0));
+					long offsetsNumBits = (offsets instanceof EliasFanoMonotoneLongBigList) ?
+							((EliasFanoMonotoneLongBigList) offsets).numBits() :
+							((EliasFanoMonotoneBigLongBigList) offsets).numBits();
+					pl.logger().info("Label pointer bits per node: " + offsetsNumBits / (g.numNodes() + 1.0));
 				}
 			}
 
@@ -546,5 +535,33 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 		properties.println(ArcLabelledImmutableGraph.UNDERLYINGGRAPH_PROPERTY_KEY + " = " + underlyingBasename);
 		properties.println(BitStreamArcLabelledImmutableGraph.LABELSPEC_PROPERTY_KEY + " = " + graph.prototype().toSpec());
 		properties.close();
+	}
+
+	/** An iterator returning the offsets. */
+	private final static class OffsetsLongIterator implements LongIterator {
+		private final InputBitStream offsetStream;
+		private final long n;
+		private long off;
+		private long i;
+
+		private OffsetsLongIterator(final ImmutableGraph g, final InputBitStream offsetIbs) {
+			this.offsetStream = offsetIbs;
+			this.n = g.numNodes();
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i <= n;
+		}
+		@Override
+		public long nextLong() {
+			i++;
+			try {
+				return off = offsetStream.readLongGamma() + off;
+			}
+			catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 }
