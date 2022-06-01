@@ -163,7 +163,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 	protected InputBitStream newInputBitStream() throws FileNotFoundException {
 		return byteArray != null ? new InputBitStream(byteArray) :
 			labelStream != null ? new InputBitStream(new FastMultiByteArrayInputStream(labelStream)) :
-			mappedLabelStream != null ? new InputBitStream(mappedLabelStream) :
+			mappedLabelStream != null ? new InputBitStream(mappedLabelStream.copy()) :
 				new InputBitStream(basename + LABELS_EXTENSION);
 	}
 
