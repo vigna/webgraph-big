@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.channels.FileChannel;
 import java.util.Properties;
 
 import it.unimi.dsi.big.webgraph.AbstractLazyLongIterator;
@@ -38,6 +39,7 @@ import it.unimi.dsi.fastutil.io.BinIO;
 import it.unimi.dsi.fastutil.io.FastMultiByteArrayInputStream;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongBigList;
+import it.unimi.dsi.io.ByteBufferInputStream;
 import it.unimi.dsi.io.InputBitStream;
 import it.unimi.dsi.io.OutputBitStream;
 import it.unimi.dsi.lang.ObjectParser;
@@ -118,6 +120,8 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 	private final byte[] byteArray;
 	/** A multi-byte array input stream that replaces {@link #byteArray} for streams longer than {@link Integer#MAX_VALUE} bytes. */
 	private final FastMultiByteArrayInputStream labelStream;
+	/** The memory-mapped input stream storing the labels, that replaces {@link #byteArray} and {@link #labelStream} if the graph was loaded in memory-mapped mode.*/
+	private final ByteBufferInputStream mappedLabelStream;
 	/** The basename of this graph (required for offline access). */
 	protected final CharSequence basename;
 	/** The offset array, or <code>null</code> for sequential access. */
@@ -131,20 +135,22 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 	 * @param byteArray a byte array containing the bit stream of labels, or <code>null</code> for offile access
 	 * or large file access.
 	 * @param labelStream if <code>byteArray</code> is <code>null</code>, this stream is used as the bit stream of labels.
+	 * @param mappedLabelStream if <code>byteArray</code> and <code>labelStream</code> are <code>null</code>, this memory-mapped stream is used as the bit stream of labels.
 	 * @param offset the offset array for random access, or <code>null</code>.
 	 */
-	protected BitStreamArcLabelledImmutableGraph(final CharSequence basename, final ImmutableGraph g, final Label prototype, final byte[] byteArray, final FastMultiByteArrayInputStream labelStream, final LongBigList offset) {
+	protected BitStreamArcLabelledImmutableGraph(final CharSequence basename, final ImmutableGraph g, final Label prototype, final byte[] byteArray, final FastMultiByteArrayInputStream labelStream, ByteBufferInputStream mappedLabelStream, final LongBigList offset) {
 		this.g = g;
 		this.byteArray = byteArray;
 		this.labelStream = labelStream;
 		this.prototype = prototype;
 		this.basename = basename;
+		this.mappedLabelStream = mappedLabelStream;
 		this.offset = offset;
 	}
 
 	@Override
 	public BitStreamArcLabelledImmutableGraph copy() {
-		return new BitStreamArcLabelledImmutableGraph(basename, g.copy(), prototype.copy(), byteArray, labelStream, offset);
+		return new BitStreamArcLabelledImmutableGraph(basename, g.copy(), prototype.copy(), byteArray, labelStream, mappedLabelStream != null ? mappedLabelStream.copy() : null, offset);
 	}
 
 	/** Returns the label bit stream.
@@ -157,6 +163,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 	protected InputBitStream newInputBitStream() throws FileNotFoundException {
 		return byteArray != null ? new InputBitStream(byteArray) :
 			labelStream != null ? new InputBitStream(new FastMultiByteArrayInputStream(labelStream)) :
+			mappedLabelStream != null ? new InputBitStream(mappedLabelStream.copy()) :
 				new InputBitStream(basename + LABELS_EXTENSION);
 	}
 
@@ -336,6 +343,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 
 		byte[] byteArray = null;
 		FastMultiByteArrayInputStream labelStream = null;
+		ByteBufferInputStream mappedLabelStream = null;
 		LongBigList offsets = null;
 
 		if (method != LoadMethod.OFFLINE) {
@@ -346,8 +354,12 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 
 			final FileInputStream fis = new FileInputStream(basename + LABELS_EXTENSION);
 			final long size = fis.getChannel().size();
-			if (size <= Integer.MAX_VALUE) byteArray = BinIO.loadBytes(basename + LABELS_EXTENSION);
-			else labelStream = new FastMultiByteArrayInputStream(fis, size);
+			if (method == LoadMethod.MAPPED) {
+				mappedLabelStream = ByteBufferInputStream.map(fis.getChannel(), FileChannel.MapMode.READ_ONLY);
+			} else {
+				if (size <= Integer.MAX_VALUE) byteArray = BinIO.loadBytes(basename + LABELS_EXTENSION);
+				else labelStream = new FastMultiByteArrayInputStream(fis, size);
+			}
 
 			if (pl != null) {
 				pl.count = size;
@@ -380,7 +392,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 			fis.close();
 		}
 
-		return new BitStreamArcLabelledImmutableGraph(basename, g, prototype, byteArray, labelStream, offsets);
+		return new BitStreamArcLabelledImmutableGraph(basename, g, prototype, byteArray, labelStream, mappedLabelStream, offsets);
 
 	}
 
