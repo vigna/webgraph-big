@@ -306,7 +306,7 @@ import it.unimi.dsi.webgraph.GraphClassParser;
  * using the file of offsets. This is a long and tedious process, in particular with large graphs.
  * The main method of this class has an option that will generate such a list once for all and
  * serialise it in a file with extension <code>.obl</code>. The list will be quickly deserialised if
- * its modification date is later than that of the offset file.
+ * this file is present.
  *
  * <H2>Not Loading the Graph File at All</H2>
  *
@@ -1491,8 +1491,7 @@ public class BVGraph extends ImmutableGraph implements CompressionFlags, Seriali
 			final File offsetsBigListFile = new File(basename + OFFSETS_BIG_LIST_EXTENSION);
 
 			if (offsetsBigListFile.exists()) {
-				if (new File(basename + OFFSETS_EXTENSION).lastModified() > offsetsBigListFile.lastModified()) LOGGER.warn("A cached long big list of offsets was found, but the corresponding offsets file has a later modification time");
-				else try {
+				try {
 					offsets = (LongBigList)BinIO.loadObject(offsetsBigListFile);
 				}
 				catch (final ClassNotFoundException e) {
