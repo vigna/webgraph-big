@@ -40,7 +40,11 @@ public class BidirectionalImmutableGraph extends ImmutableGraph {
 		this.forward = graph;
 		this.backward = transpose;
 		if (graph.numNodes() != transpose.numNodes()) throw new IllegalArgumentException("The graph and its transpose have a different number of nodes");
-		if (graph.numArcs() != transpose.numArcs()) throw new IllegalArgumentException("The graph and its transpose have a different number of arcs");
+		try {
+			if (graph.numArcs() != transpose.numArcs()) throw new IllegalArgumentException("The graph and its transpose have a different number of arcs");
+		} catch (UnsupportedOperationException e) {
+			// Ignore, the graph does not support numArcs()
+		}
 	}
 
 	@Override
