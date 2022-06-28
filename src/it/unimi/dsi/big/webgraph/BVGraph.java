@@ -283,7 +283,6 @@ import it.unimi.dsi.webgraph.GraphClassParser;
  * <dt><code>*avg[log]gap</code>
  * <dd>the average of the gaps (or of their logarithm) of successors and residuals: note that this
  * data is computed from the exponential statistics above, and thus it is necessarily approximate.
- * <dd>
  * </dl>
  *
  * <H2>How The Graph File Is Loaded Into Memory</H2>
