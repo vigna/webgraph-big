@@ -1,11 +1,16 @@
-3.6.7
+3.7.0
 
 - New BidirectionalImmutableGraph wrapper to manage easily a graph
   and its transpose. Thanks to Antoine Pietri for contributing this
   class.
 
 - New FixedWidthLongListLabel class. Thanks to Antoine Pietri and
-  Thibault Allançon for contributing this class.  
+  Thibault Allançon for contributing this class.
+
+- Instances of EliasFanoMonotoneLongBigList16 have been replaced with
+  instances of EliasFanoMonotoneBigLongBigList. As a side-effect,
+  the number of bits per pointer will not be written unless you 
+  recompute your .obl files.
 
 3.6.6
 

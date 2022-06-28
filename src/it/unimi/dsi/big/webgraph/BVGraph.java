@@ -75,8 +75,8 @@ import it.unimi.dsi.io.OutputBitStream;
 import it.unimi.dsi.lang.MutableString;
 import it.unimi.dsi.lang.ObjectParser;
 import it.unimi.dsi.logging.ProgressLogger;
+import it.unimi.dsi.sux4j.util.EliasFanoMonotoneBigLongBigList;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList;
-import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList16;
 import it.unimi.dsi.webgraph.GraphClassParser;
 
 
@@ -1501,13 +1501,13 @@ public class BVGraph extends ImmutableGraph implements CompressionFlags, Seriali
 			}
 			final long upperBound = (isMapped ? mappedGraphStream.length() : isMemory ? graphMemory.length : graphStream.length) * Byte.SIZE + 1;
 			final OffsetsLongIterator offsetsIterator = new OffsetsLongIterator(this, offsetIbs);
-			if (offsets == null) offsets = EliasFanoMonotoneLongBigList.fits(n + 1, upperBound) ? new EliasFanoMonotoneLongBigList(n + 1, upperBound, offsetsIterator) : new EliasFanoMonotoneLongBigList16(n + 1, upperBound, offsetsIterator);
+			if (offsets == null) offsets = EliasFanoMonotoneLongBigList.fits(n + 1, upperBound) ? new EliasFanoMonotoneLongBigList(n + 1, upperBound, offsetsIterator) : new EliasFanoMonotoneBigLongBigList(n + 1, upperBound, offsetsIterator);
 
 			if (pl != null) {
 				pl.count = n + 1;
 				pl.done();
 				if (offsets instanceof EliasFanoMonotoneLongBigList) pl.logger().info("Pointer bits per node: " + Util.format(((EliasFanoMonotoneLongBigList)offsets).numBits() / (n + 1.0)));
-				if (offsets instanceof EliasFanoMonotoneLongBigList16) pl.logger().info("Pointer bits per node: " + Util.format(((EliasFanoMonotoneLongBigList16)offsets).numBits() / (n + 1.0)));
+				if (offsets instanceof EliasFanoMonotoneBigLongBigList) pl.logger().info("Pointer bits per node: " + Util.format(((EliasFanoMonotoneBigLongBigList)offsets).numBits() / (n + 1.0)));
 			}
 		}
 
@@ -2401,7 +2401,7 @@ public class BVGraph extends ImmutableGraph implements CompressionFlags, Seriali
 				final long upperBound = new File(graph.basename() + GRAPH_EXTENSION).length() * Byte.SIZE + 1;
 				BinIO.storeObject(EliasFanoMonotoneLongBigList.fits(graph.numNodes() + 1, upperBound) ?
 						new EliasFanoMonotoneLongBigList(graph.numNodes() + 1, upperBound, new OffsetsLongIterator(bvGraph, offsets)) :
-						new EliasFanoMonotoneLongBigList16(graph.numNodes() + 1, upperBound, new OffsetsLongIterator(bvGraph, offsets)),
+						new EliasFanoMonotoneBigLongBigList(graph.numNodes() + 1, upperBound, new OffsetsLongIterator(bvGraph, offsets)),
 					graph.basename() + OFFSETS_BIG_LIST_EXTENSION);
 				offsets.close();
 			}

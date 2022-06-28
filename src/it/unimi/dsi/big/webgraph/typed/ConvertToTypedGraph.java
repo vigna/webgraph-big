@@ -54,8 +54,8 @@ import it.unimi.dsi.io.InputBitStream;
 import it.unimi.dsi.io.OutputBitStream;
 import it.unimi.dsi.logging.ProgressLogger;
 import it.unimi.dsi.stat.SummaryStats;
+import it.unimi.dsi.sux4j.util.EliasFanoMonotoneBigLongBigList;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList;
-import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList16;
 import it.unimi.dsi.webgraph.ArrayListMutableGraph;
 
 public class ConvertToTypedGraph {
@@ -184,7 +184,7 @@ public class ConvertToTypedGraph {
 		for (int i = 0; i < numTypes; i++) {
 			final InputBitStream off = new InputBitStream(basename + "." + i + BVGraph.OFFSETS_EXTENSION);
 			final long upperBound = new File(basename + "." + i + BVGraph.GRAPH_EXTENSION).length() * Byte.SIZE + 1;
-			BinIO.storeObject(EliasFanoMonotoneLongBigList.fits(numNodes[i] + 1, upperBound) ? new EliasFanoMonotoneLongBigList(numNodes[i] + 1, upperBound, new OffsetsLongIterator(numNodes[i], off)) : new EliasFanoMonotoneLongBigList16(graph.numNodes() + 1, upperBound, new OffsetsLongIterator(numNodes[i], off)), basename + "." + i + BVGraph.OFFSETS_BIG_LIST_EXTENSION);
+			BinIO.storeObject(EliasFanoMonotoneLongBigList.fits(numNodes[i] + 1, upperBound) ? new EliasFanoMonotoneLongBigList(numNodes[i] + 1, upperBound, new OffsetsLongIterator(numNodes[i], off)) : new EliasFanoMonotoneBigLongBigList(graph.numNodes() + 1, upperBound, new OffsetsLongIterator(numNodes[i], off)), basename + "." + i + BVGraph.OFFSETS_BIG_LIST_EXTENSION);
 			off.close();
 		}
 
