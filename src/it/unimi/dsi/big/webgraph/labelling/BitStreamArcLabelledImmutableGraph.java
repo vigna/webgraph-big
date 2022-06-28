@@ -29,7 +29,18 @@ import java.nio.channels.FileChannel;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import com.martiansoftware.jsap.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.martiansoftware.jsap.FlaggedOption;
+import com.martiansoftware.jsap.JSAP;
+import com.martiansoftware.jsap.JSAPException;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
+import com.martiansoftware.jsap.SimpleJSAP;
+import com.martiansoftware.jsap.Switch;
+import com.martiansoftware.jsap.UnflaggedOption;
+
 import it.unimi.dsi.big.webgraph.AbstractLazyLongIterator;
 import it.unimi.dsi.big.webgraph.BVGraph;
 import it.unimi.dsi.big.webgraph.ImmutableGraph;
@@ -39,8 +50,8 @@ import it.unimi.dsi.big.webgraph.labelling.ArcLabelledNodeIterator.LabelledArcIt
 import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.io.BinIO;
 import it.unimi.dsi.fastutil.io.FastMultiByteArrayInputStream;
-import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongBigList;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.io.ByteBufferInputStream;
 import it.unimi.dsi.io.InputBitStream;
 import it.unimi.dsi.io.OutputBitStream;
@@ -48,8 +59,6 @@ import it.unimi.dsi.lang.ObjectParser;
 import it.unimi.dsi.logging.ProgressLogger;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneBigLongBigList;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** A labelled graph storing its labels as a bit stream.
  *
@@ -154,7 +163,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 	 * @param mappedLabelStream if <code>byteArray</code> and <code>labelStream</code> are <code>null</code>, this memory-mapped stream is used as the bit stream of labels.
 	 * @param offset the offset array for random access, or <code>null</code>.
 	 */
-	protected BitStreamArcLabelledImmutableGraph(final CharSequence basename, final ImmutableGraph g, final Label prototype, final byte[] byteArray, final FastMultiByteArrayInputStream labelStream, ByteBufferInputStream mappedLabelStream, final LongBigList offset) {
+	protected BitStreamArcLabelledImmutableGraph(final CharSequence basename, final ImmutableGraph g, final Label prototype, final byte[] byteArray, final FastMultiByteArrayInputStream labelStream, final ByteBufferInputStream mappedLabelStream, final LongBigList offset) {
 		this.g = g;
 		this.byteArray = byteArray;
 		this.labelStream = labelStream;
@@ -409,7 +418,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 				if (pl != null) {
 					pl.count = g.numNodes() + 1;
 					pl.done();
-					long offsetsNumBits = (offsets instanceof EliasFanoMonotoneLongBigList) ?
+					final long offsetsNumBits = (offsets instanceof EliasFanoMonotoneLongBigList) ?
 							((EliasFanoMonotoneLongBigList) offsets).numBits() :
 							((EliasFanoMonotoneBigLongBigList) offsets).numBits();
 					pl.logger().info("Label pointer bits per node: " + offsetsNumBits / (g.numNodes() + 1.0));
@@ -619,9 +628,9 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 		if (jsap.messagePrinted()) System.exit(1);
 
 		final boolean list = jsapResult.getBoolean("list");
-		String source = jsapResult.getString("sourceBasename");
-		String dest = jsapResult.getString("destBasename");
-		String underlying = jsapResult.getString("underlyingBasename");
+		final String source = jsapResult.getString("sourceBasename");
+		final String dest = jsapResult.getString("destBasename");
+		final String underlying = jsapResult.getString("underlyingBasename");
 
 		final ProgressLogger pl = new ProgressLogger(LOGGER, 10, TimeUnit.SECONDS);
 		final ArcLabelledImmutableGraph graph = ArcLabelledImmutableGraph.loadOffline(source, pl);
@@ -635,12 +644,13 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 			if (list) {
 				final FileInputStream fis = new FileInputStream(source + LABELS_EXTENSION);
 				final long size = fis.getChannel().size();
-				ImmutableGraph g = ImmutableGraph.loadOffline(source, pl);
+				final ImmutableGraph g = ImmutableGraph.loadOffline(source, pl);
 				final InputBitStream offsetStream = new InputBitStream(source + LABEL_OFFSETS_EXTENSION);
-				LongBigList offsets = (EliasFanoMonotoneLongBigList.fits(g.numNodes() + 1, size * Byte.SIZE + 1)) ?
+				final LongBigList offsets = (EliasFanoMonotoneLongBigList.fits(g.numNodes() + 1, size * Byte.SIZE + 1)) ?
 						new EliasFanoMonotoneLongBigList(g.numNodes() + 1, size * Byte.SIZE + 1, new OffsetsLongIterator(g, offsetStream)) :
 						new EliasFanoMonotoneBigLongBigList(g.numNodes() + 1, size * Byte.SIZE + 1, new OffsetsLongIterator(g, offsetStream));
 				offsetStream.close();
+				fis.close();
 				BinIO.storeObject(offsets, g.basename() + LABEL_OFFSETS_BIG_LIST_EXTENSION);
 			}
 			else {
