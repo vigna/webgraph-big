@@ -12,6 +12,10 @@
   the number of bits per pointer will not be written unless you 
   recompute your .obl files.
 
+- BitStreamArcLabelledImmutableGraph now supports Elias-Fano storage
+  of label offsets. Thanks to Antoine Pietri for implementing this
+  feature.
+
 3.6.6
 
 - Now ScatteredArcsASCIIGraph propagates BatchGraph's copiable iterators.
