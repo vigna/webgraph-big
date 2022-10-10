@@ -52,6 +52,8 @@ public class UnionArcLabelledImmutableGraph extends ArcLabelledImmutableGraph {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Transform.class);
 	@SuppressWarnings("unused")
 	private static final boolean DEBUG = false;
+	private static final int INITIAL_BIG_ARRAY_SIZE = 16;
+
 	private final ArcLabelledImmutableGraph g0, g1;
 	private final long n0, n1, numNodes;
 
@@ -59,18 +61,18 @@ public class UnionArcLabelledImmutableGraph extends ArcLabelledImmutableGraph {
 	private final LabelMergeStrategy labelMergeStrategy;
 
 	/** The node whose successors are cached, or -1 if no successors are currently cached. */
-	private final int cachedNode = -1;
+	private long cachedNode = -1;
 
 	/** The outdegree of the cached node, if any. */
-	private int outdegree;
+	private long outdegree;
 
 	/** The successors of the cached node, if any; note that the array might be larger. */
-	private long[][] cache = LongBigArrays.EMPTY_BIG_ARRAY;
+	private long[][] cache;
 
 	/**
 	 * The labels on the arcs going out of the cached node, if any; note that the array might be larger.
 	 */
-	private Label labelCache[][] = Label.EMPTY_LABEL_BIG_ARRAY;
+	private Label labelCache[][];
 	/** The prototype for the labels of this graph. */
 	private final Label prototype;
 
@@ -100,13 +102,10 @@ public class UnionArcLabelledImmutableGraph extends ArcLabelledImmutableGraph {
 
 	private static class InternalNodeIterator extends ArcLabelledNodeIterator {
 		/** If outdegree is nonnegative, the successors of the current node (this array may be, however, larger). */
-		@SuppressWarnings("hiding")
 		private long cache[][];
 		/** If outdegree is nonnegative, the labels on the arcs going out of the current node (this array may be, however, larger). */
-		@SuppressWarnings("hiding")
 		private Label[][] labelCache = Label.EMPTY_LABEL_BIG_ARRAY;
 		/** The outdegree of the current node, or -1 if the successor array for the current node has not been computed yet. */
-		@SuppressWarnings("hiding")
 		private long outdegree = -1;
 		private ArcLabelledNodeIterator i0;
 		private ArcLabelledNodeIterator i1;
@@ -262,13 +261,20 @@ public class UnionArcLabelledImmutableGraph extends ArcLabelledImmutableGraph {
 
 	@Override
 	public long[][] successorBigArray(final long x) {
-		if (x == cachedNode) return cache;
+		fillCache(x);
+		return cache;
+	}
+
+	private void fillCache(final long x) {
+		if (x == cachedNode) return;
 		// We need to perform a manual merge
 		final ArcLabelledNodeIterator.LabelledArcIterator succ0 = (LabelledArcIterator) (x < n0? g0.successors(x) : ObjectIterators.EMPTY_ITERATOR);
 		final ArcLabelledNodeIterator.LabelledArcIterator succ1 = (LabelledArcIterator) (x < n1? g1.successors(x) : ObjectIterators.EMPTY_ITERATOR);
 		long outdegree = 0;
 		long s0 = -1, s1 = -1;
 		Label l0 = null, l1 = null;
+		long[][] cache = LongBigArrays.newBigArray(INITIAL_BIG_ARRAY_SIZE);
+		Label[][] labelCache = BigArrays.wrap(new Label[INITIAL_BIG_ARRAY_SIZE]);
 		while ((s0 != -1 || (s0 = succ0.nextLong()) != -1) | (s1 != -1 || (s1 = succ1.nextLong()) != -1)) {
 			if (s0 != -1) l0 = succ0.label().copy();
 			if (s1 != -1) l1 = succ1.label().copy();
@@ -291,30 +297,38 @@ public class UnionArcLabelledImmutableGraph extends ArcLabelledImmutableGraph {
 			}
 			outdegree++;
 		}
-		return cache;
+
+		this.cache = cache;
+		this.labelCache = labelCache;
+		this.outdegree = outdegree;
+		cachedNode = x;
 	}
 
 	@Override
 	public long outdegree(final long x) {
-		successorBigArray(x); // So the cache gets filled
+		fillCache(x);
 		return outdegree;
 	}
 
 	@Override
 	public Label[][] labelBigArray(final long x) {
-		successorBigArray(x); // So that the cache is filled up
+		fillCache(x);
 		return labelCache;
 	}
 
 	@Override
 	public LabelledArcIterator successors(final long x) {
-		successorBigArray(x); // So that the cache is filled up
+		fillCache(x);
+		final long outdegree = this.outdegree;
+		final long[][] cache = this.cache;
+		final Label[][] labelCache = this.labelCache;
+
 		return new LabelledArcIterator() {
 			long nextToBeReturned = 0;
 
 			@Override
 			public Label label() {
-				return get(labelCache, nextToBeReturned);
+				return get(labelCache, nextToBeReturned - 1);
 			}
 
 			@Override
@@ -326,6 +340,7 @@ public class UnionArcLabelledImmutableGraph extends ArcLabelledImmutableGraph {
 			@Override
 			public long skip(final long x) {
 				final long skipped = Math.min(x, outdegree - nextToBeReturned);
+				if (skipped < 0) return 0;
 				nextToBeReturned += skipped;
 				return skipped;
 			}
