@@ -1,3 +1,7 @@
+3.7.1
+
+- Fixed old bug in UnionArcLabelledImmutableGraph.
+
 3.7.0
 
 - New BidirectionalImmutableGraph wrapper to manage easily a graph
