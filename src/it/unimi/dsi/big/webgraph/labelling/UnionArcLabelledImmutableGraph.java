@@ -52,7 +52,7 @@ public class UnionArcLabelledImmutableGraph extends ArcLabelledImmutableGraph {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Transform.class);
 	@SuppressWarnings("unused")
 	private static final boolean DEBUG = false;
-	private static final int INITIAL_BIG_ARRAY_SIZE = 16;
+	private static final int INITIAL_BIG_ARRAY_SIZE = 64;
 
 	private final ArcLabelledImmutableGraph g0, g1;
 	private final long n0, n1, numNodes;

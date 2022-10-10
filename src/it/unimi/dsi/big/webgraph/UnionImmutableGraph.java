@@ -38,20 +38,20 @@ public class UnionImmutableGraph extends ImmutableGraph {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Transform.class);
 	@SuppressWarnings("unused")
 	private static final boolean DEBUG = false;
-	@SuppressWarnings("unused")
-	private static final boolean ASSERTS = false;
+
+	private static final int INITIAL_BIG_ARRAY_SIZE = 64;
 
 	private final ImmutableGraph g0, g1;
 	private final long n0, n1, numNodes;
 
 	/** The node whose successors are cached, or -1 if no successors are currently cached. */
-	private final long cachedNode = -1;
+	private long cachedNode = -1;
 
 	/** The outdegree of the cached node, if any. */
 	private long outdegree;
 
 	/** The successors of the cached node, if any; note that the array might be larger. */
-	private long[][] cache = LongBigArrays.EMPTY_BIG_ARRAY;
+	private long[][] cache;
 
 	/**
 	 * Creates the union of two given graphs.
@@ -74,10 +74,8 @@ public class UnionImmutableGraph extends ImmutableGraph {
 
 	private static class InternalNodeIterator extends NodeIterator {
 		/** If outdegree is nonnegative, the successors of the current node (this array may be, however, larger). */
-		@SuppressWarnings("hiding")
 		private long[][] cache;
 		/** The outdegree of the current node, or -1 if the successor array for the current node has not been computed yet. */
-		@SuppressWarnings("hiding")
 		private long outdegree = -1;
 		private NodeIterator i0;
 		private NodeIterator i1;
@@ -173,10 +171,10 @@ public class UnionImmutableGraph extends ImmutableGraph {
 		return g0.hasCopiableIterators() && g1.hasCopiableIterators();
 	}
 
-	@Override
-	public long[][] successorBigArray(final long x) {
-		if (x == cachedNode) return cache;
+	private void fillCache(final long x) {
+		if (x == cachedNode) return;
 		final MergedLongIterator merge = new MergedLongIterator(x < n0? g0.successors(x) : LazyLongIterators.EMPTY_ITERATOR, x < n1? g1.successors(x) : LazyLongIterators.EMPTY_ITERATOR);
+		long[][] cache = LongBigArrays.newBigArray(INITIAL_BIG_ARRAY_SIZE);
 		outdegree = LazyLongIterators.unwrap(merge, cache);
 		long upto, t;
 		while ((t = merge.nextLong()) != -1) {
@@ -186,12 +184,20 @@ public class UnionImmutableGraph extends ImmutableGraph {
 			outdegree++;
 			outdegree += LazyLongIterators.unwrap(merge, cache, upto, length(cache) - upto);
 		}
+
+		this.cache = cache;
+		cachedNode = x;
+	}
+
+	@Override
+	public long[][] successorBigArray(final long x) {
+		fillCache(x);
 		return cache;
 	}
 
 	@Override
 	public long outdegree(final long x) {
-		successorBigArray(x); // So the cache gets filled
+		fillCache(x);
 		return outdegree;
 	}
 }
