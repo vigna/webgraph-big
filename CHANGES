@@ -2,6 +2,8 @@
 
 - Fixed old bug in UnionArcLabelledImmutableGraph.
 
+- BitStreamArcLabelledImmutableGraph has now copiable iterators.
+
 3.7.0
 
 - New BidirectionalImmutableGraph wrapper to manage easily a graph
