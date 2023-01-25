@@ -50,7 +50,7 @@ public class BitStreamArcLabelledGraphTest extends WebGraphTestCase {
 	private static final int[] BATCH_SIZES = { 1, 2, 4, 5, 16 };
 
 	@Test
-	public void testCompression() throws IOException, IllegalArgumentException, SecurityException {
+	public void testParallelCompression() throws IOException, IllegalArgumentException, SecurityException {
 		ImmutableGraph g = ImmutableGraph.wrap(new ErdosRenyiGraph(300000, 1E-6));
 		final File basename = BVGraphTest.storeTempGraph(g);
 		g = ImmutableGraph.load(basename.toString());
@@ -60,6 +60,16 @@ public class BitStreamArcLabelledGraphTest extends WebGraphTestCase {
 		BVGraph.store(bsalg, basename.toString());
 		BitStreamArcLabelledImmutableGraph.store(bsalg, basenameLabel, basename.toString());
 		assertEquals(bsalg, BitStreamArcLabelledImmutableGraph.load(basenameLabel));
+
+		final ArcLabelledImmutableGraph s = Transform.symmetrizeOffline(bsalg, (final Label first, final Label second) -> first, 10000000);
+		BVGraph.store(s, basename.toString());
+		BitStreamArcLabelledImmutableGraph.store(s, basenameLabel, basename.toString());
+		assertEquals(s, BitStreamArcLabelledImmutableGraph.load(basenameLabel));
+
+		deleteGraph(basename);
+		new File(basenameLabel + ImmutableGraph.PROPERTIES_EXTENSION).delete();
+		new File(basenameLabel + BitStreamArcLabelledImmutableGraph.LABELS_EXTENSION).delete();
+		new File(basenameLabel + BitStreamArcLabelledImmutableGraph.LABEL_OFFSETS_EXTENSION).delete();
 	}
 
 	public static File storeTempGraph(final ArcLabelledImmutableGraph g) throws IOException, IllegalArgumentException, SecurityException {
