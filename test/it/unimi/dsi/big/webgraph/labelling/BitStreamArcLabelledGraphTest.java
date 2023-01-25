@@ -39,6 +39,7 @@ import it.unimi.dsi.big.webgraph.WebGraphTestCase;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.io.OutputBitStream;
 import it.unimi.dsi.webgraph.ArrayListMutableGraph;
+import it.unimi.dsi.webgraph.examples.ErdosRenyiGraph;
 
 public class BitStreamArcLabelledGraphTest extends WebGraphTestCase {
 
@@ -47,6 +48,19 @@ public class BitStreamArcLabelledGraphTest extends WebGraphTestCase {
 	private static final int MAX_WIDTH_FOR_FIXED = 32;
 	private static final int[] WIDTHS = { -1, 0, 1, 2, 3, 8, 32, 40, 41, 63 };
 	private static final int[] BATCH_SIZES = { 1, 2, 4, 5, 16 };
+
+	@Test
+	public void testCompression() throws IOException, IllegalArgumentException, SecurityException {
+		ImmutableGraph g = ImmutableGraph.wrap(new ErdosRenyiGraph(300000, 1E-6));
+		final File basename = BVGraphTest.storeTempGraph(g);
+		g = ImmutableGraph.load(basename.toString());
+		final String basenameLabel = createGraphWithGammaLabels(basename, g);
+		final BitStreamArcLabelledImmutableGraph bsalg = BitStreamArcLabelledImmutableGraph.load(basenameLabel);
+		testLabels(bsalg, -1);
+		BVGraph.store(bsalg, basename.toString());
+		BitStreamArcLabelledImmutableGraph.store(bsalg, basenameLabel, basename.toString());
+		assertEquals(bsalg, BitStreamArcLabelledImmutableGraph.load(basenameLabel));
+	}
 
 	public static File storeTempGraph(final ArcLabelledImmutableGraph g) throws IOException, IllegalArgumentException, SecurityException {
 		final File basename = File.createTempFile(BitStreamArcLabelledGraphTest.class.getSimpleName(), "test");

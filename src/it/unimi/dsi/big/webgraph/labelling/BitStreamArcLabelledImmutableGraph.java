@@ -60,6 +60,7 @@ import it.unimi.dsi.logging.ProgressLogger;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneBigLongBigList;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList;
 
+
 /** A labelled graph storing its labels as a bit stream.
  *
  * <p>Instances of this class wrap a given {@linkplain ImmutableGraph immutable graph} and a bit stream.
@@ -271,7 +272,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 
 	@Override
 	public boolean hasCopiableIterators() {
-		return false;
+		return g.hasCopiableIterators();
 	}
 
 	@Override
@@ -433,17 +434,26 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 	}
 
 	private final static class BitStreamArcLabelledNodeIterator extends ArcLabelledNodeIterator {
-		final private NodeIterator underlyingNodeIterator;
-		final private InputBitStream ibs;
-		final private Label prototype;
+		private final BitStreamArcLabelledImmutableGraph bsalig;
+		private final NodeIterator underlyingNodeIterator;
+		private final InputBitStream ibs;
+		private final Label prototype;
 		private Label[][] label = Label.EMPTY_LABEL_BIG_ARRAY;
 
-		public BitStreamArcLabelledNodeIterator(final long from, final ImmutableGraph g, final Label prototype, final InputBitStream ibs) {
+		public BitStreamArcLabelledNodeIterator(final long from, final BitStreamArcLabelledImmutableGraph bsalig, final Label prototype, final InputBitStream ibs) {
+			this.bsalig = bsalig;
 			this.prototype = prototype;
 			this.ibs = ibs;
-			underlyingNodeIterator = g.nodeIterator();
+			underlyingNodeIterator = bsalig.g.nodeIterator();
 			// Skip nodes up to from. This is necessary to skip labels, too.
 			for(long i = from; i-- != 0;) nextLong();
+		}
+
+		protected BitStreamArcLabelledNodeIterator(final NodeIterator underlyingNodeIterator, final BitStreamArcLabelledImmutableGraph g, final Label prototype, final InputBitStream ibs) {
+			this.bsalig = g;
+			this.prototype = prototype;
+			this.ibs = ibs;
+			this.underlyingNodeIterator = underlyingNodeIterator;
 		}
 
 		private final static class BitStreamArcLabelledNodeIteratorArcIterator extends AbstractLazyLongIterator implements ArcLabelledNodeIterator.LabelledArcIterator {
@@ -528,12 +538,23 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 			return underlyingNodeIterator.hasNext();
 		}
 
+		@Override
+		public ArcLabelledNodeIterator copy(final long upperBound) {
+			final InputBitStream ibs;
+			try {
+				ibs = bsalig.newInputBitStream();
+				ibs.position(this.ibs.position());
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+			return new BitStreamArcLabelledNodeIterator(underlyingNodeIterator.copy(upperBound), bsalig, prototype, ibs);
+		}
 	}
 
 	@Override
 	public ArcLabelledNodeIterator nodeIterator(final long from) {
 		try {
-			return new BitStreamArcLabelledNodeIterator(from, g, prototype, newInputBitStream());
+			return new BitStreamArcLabelledNodeIterator(from, this, prototype, newInputBitStream());
 		}
 		catch (final FileNotFoundException e) {
 			throw new RuntimeException(e);
