@@ -46,6 +46,7 @@ import it.unimi.dsi.big.webgraph.BVGraph;
 import it.unimi.dsi.big.webgraph.ImmutableGraph;
 import it.unimi.dsi.big.webgraph.LazyLongIterator;
 import it.unimi.dsi.big.webgraph.NodeIterator;
+import it.unimi.dsi.big.webgraph.Transform;
 import it.unimi.dsi.big.webgraph.labelling.ArcLabelledNodeIterator.LabelledArcIterator;
 import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.io.BinIO;
@@ -61,67 +62,86 @@ import it.unimi.dsi.sux4j.util.EliasFanoMonotoneBigLongBigList;
 import it.unimi.dsi.sux4j.util.EliasFanoMonotoneLongBigList;
 
 
-/** A labelled graph storing its labels as a bit stream.
+/**
+ * A labelled graph storing its labels as a bit stream.
  *
- * <p>Instances of this class wrap a given {@linkplain ImmutableGraph immutable graph} and a bit stream.
- * Given a prototype {@link Label}, the bit stream is then considered as containing all labels of all arcs
- * as returned by a complete enumeration (made using {@link #nodeIterator()}). The overall graph is described
- * by a <em>label file</em> (with extension
- * <code>.labels</code>), an <em>offset file</em> (with extension
- * <code>.labeloffsets</code>) and a <em>property file</em> (with extension
- * <code>.properties</code>). The latter, not surprisingly, is a Java property file.
- * Optionally, a <em>label offset big-list file</em> (with extension
- * <code>.labelobl</code>) can be created to load label offsets faster.
+ * <p>
+ * Instances of this class wrap a given {@linkplain ImmutableGraph immutable graph} and a bit
+ * stream. Given a prototype {@link Label}, the bit stream is then considered as containing all
+ * labels of all arcs as returned by a complete enumeration (made using {@link #nodeIterator()}).
+ * The overall graph is described by a <em>label file</em> (with extension <code>.labels</code>), an
+ * <em>offset file</em> (with extension <code>.labeloffsets</code>) and a <em>property file</em>
+ * (with extension <code>.properties</code>). The latter, not surprisingly, is a Java property file.
+ * Optionally, a <em>label offset big-list file</em> (with extension <code>.labelobl</code>) can be
+ * created to load label offsets faster.
  *
  * <H2>The Label and Offset Files</H2>
  *
- * <P>Since the labels are stored as a bit stream, we must have some way to know where the labels
- * related to the successors of each node start.
- * This information is stored in the offset file, which contains the bit offset of the list of labels
- * of the arcs going out of each node (in particular,
- * the offset of the first list will be zero). As a commodity, the offset file contains an additional
- * offset pointing just after the last list (providing, as a side-effect, the actual bit length of the label file).
- * Each offset (except for the first one) is stored as a {@linkplain OutputBitStream#writeGamma(int) &gamma;-coded} difference from the previous offset.
+ * <P>
+ * Since the labels are stored as a bit stream, we must have some way to know where the labels
+ * related to the successors of each node start. This information is stored in the offset file,
+ * which contains the bit offset of the list of labels of the arcs going out of each node (in
+ * particular, the offset of the first list will be zero). As a commodity, the offset file contains
+ * an additional offset pointing just after the last list (providing, as a side-effect, the actual
+ * bit length of the label file). Each offset (except for the first one) is stored as a
+ * {@linkplain OutputBitStream#writeGamma(int) &gamma;-coded} difference from the previous offset.
  *
  * <p>
  * Note that by default the {@link EliasFanoMonotoneLongBigList} instance is created from scratch
- * using the file of label offsets. This is a long and tedious process, in particular with large label files.
- * The main method of this class has an option that will generate such a list once for all and
- * serialise it in a file with extension <code>.labelobl</code>. The list will be quickly deserialised if
- * this file is present.
+ * using the file of label offsets. This is a long and tedious process, in particular with large
+ * label files. The main method of this class has an option that will generate such a list once for
+ * all and serialise it in a file with extension <code>.labelobl</code>. The list will be quickly
+ * deserialised if this file is present.
  *
  * <H2>The Property File</H2>
  *
- * <p>The property file for an instance of this class must contain the following entries:
+ * <p>
+ * The property file for an instance of this class must contain the following entries:
  *
  * <dl>
  * <dt>graphclass
- * <dd>the name of this class; it is necessary so that load methods in
- * {@link ImmutableGraph} can identify this class;
+ * <dd>the name of this class; it is necessary so that load methods in {@link ImmutableGraph} can
+ * identify this class;
  * <dt>underlyinggraph
- * <dd>the basename (relative to the name of the property file, unless it is absolute) of the underlying {@link ImmutableGraph};
+ * <dd>the basename (relative to the name of the property file, unless it is absolute) of the
+ * underlying {@link ImmutableGraph};
  * <dt>labelspec
  * <dd>a string describing a constructor call for a label class; an example is
  * <div style="margin:1em; text-align: center">
- * <code>it.unimi.dsi.webgraph.labelling.FixedWidthIntLabel(FOO,10)</code>
- * </div>
- * parameters
- * are separated by a comma, and no quoting or escaping is allowed (see {@link Label} for details
- * about string-based constructors).
+ * <code>it.unimi.dsi.webgraph.labelling.FixedWidthIntLabel(FOO,10)</code> </div> parameters are
+ * separated by a comma, and no quoting or escaping is allowed (see {@link Label} for details about
+ * string-based constructors).
  * </dl>
  *
- * <p>The {@link #load(it.unimi.dsi.big.webgraph.ImmutableGraph.LoadMethod, CharSequence, java.io.InputStream, ProgressLogger) load()}
- * method of this class takes care of looking at the property file, loading the underlying immutable graph,
- * and setting up either sequential or random access to the bit stream containing the labels. If
- * just sequential access is required, the offsets are not loaded into memory, and if just offline
- * access is required, bit stream is never loaded into memory.
+ * <p>
+ * The
+ * {@link #load(it.unimi.dsi.big.webgraph.ImmutableGraph.LoadMethod, CharSequence, java.io.InputStream, ProgressLogger)
+ * load()} method of this class takes care of looking at the property file, loading the underlying
+ * immutable graph, and setting up either sequential or random access to the bit stream containing
+ * the labels. If just sequential access is required, the offsets are not loaded into memory, and if
+ * just offline access is required, bit stream is never loaded into memory.
  *
  * <h2>Saving labels</h2>
  *
- * <p>The {@link #store(ArcLabelledImmutableGraph, CharSequence, CharSequence)}
- * and {@link #store(ArcLabelledImmutableGraph, CharSequence, CharSequence, ProgressLogger)}
- * methods will save the labels of an instance of this graph as expected, that is,
- * the bitstream and its offsets will be saved with the extensions described above.
+ * <p>
+ * The {@link #store(ArcLabelledImmutableGraph, CharSequence, CharSequence)} and
+ * {@link #store(ArcLabelledImmutableGraph, CharSequence, CharSequence, ProgressLogger)} methods
+ * will save the labels of an instance of this graph as expected, that is, the bitstream and its
+ * offsets will be saved with the extensions described above.
+ *
+ * <p>
+ * {@link BVGraph} provides a family of
+ * {@linkplain #storeLabelled(ArcLabelledImmutableGraph, CharSequence, CharSequence, int, int, int, int, int, ProgressLogger)
+ * storeLabelled()} methods that store an {@link ArcLabelledImmutableGraph} in
+ * {@link BitStreamArcLabelledImmutableGraph} format. While these methods introduce some circularity
+ * in class dependency, and go against the {@link BitStreamArcLabelledImmutableGraph} design of
+ * decoupling the implementation of the underlying graph from the implementation of the arc labels,
+ * they are much more efficient as they store the underlying graph and its labels in a single pass
+ * over the source graph. This is particularly useful when
+ * {@linkplain Transform#transposeOffline(ImmutableGraph, int, File, ProgressLogger) transposing} or
+ * {@linkplain Transform#symmetrizeOffline(ArcLabelledImmutableGraph, it.unimi.dsi.webgraph.labelling.LabelMergeStrategy, int, File, ProgressLogger)
+ * symmetrizing} a labelled graph in an offline fashion.
+ * 
  */
 
 public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGraph {
@@ -566,10 +586,40 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 		return prototype;
 	}
 
+	/**
+	 * Stores the labels and property file associated with an {@link ArcLabelledImmutableGraph} without
+	 * using a {@linkplain ProgressLogger progress logger}.
+	 *
+	 * <p>
+	 * Note that the underlying graph must be store separately using the store method of an
+	 * {@link ImmutableGraph} implementation. Exceptionally, for efficiency reasons
+	 * {@linkplain BVGraph#store(ArcLabelledImmutableGraph, CharSequence, CharSequence, int, int, int, int, int, int, ProgressLogger)
+	 * BVGraph contains store methods} that compress a graph and store the label file (in the format of
+	 * this class) at the same time.
+	 *
+	 * @param graph a {@link BitStreamArcLabelledImmutableGraph}.
+	 * @param basename the basename.
+	 * @param underlyingBasename the basename of the underlying graph.
+	 */
 	public static void store(final ArcLabelledImmutableGraph graph, final CharSequence basename, final CharSequence underlyingBasename) throws IOException {
 		store(graph, basename, underlyingBasename, null);
 	}
 
+	/**
+	 * Stores the labels and property file associated with an {@link ArcLabelledImmutableGraph}.
+	 *
+	 * <p>
+	 * Note that the underlying graph must be store separately using the store method of an
+	 * {@link ImmutableGraph} implementation. Exceptionally, for efficiency reasons
+	 * {@linkplain BVGraph#store(ArcLabelledImmutableGraph, CharSequence, CharSequence, int, int, int, int, int, int, ProgressLogger)
+	 * BVGraph contains store methods} that compress a graph and store the label file (in the format of
+	 * this class) at the same time.
+	 *
+	 * @param graph a {@link BitStreamArcLabelledImmutableGraph}.
+	 * @param basename the basename.
+	 * @param underlyingBasename the basename of the underlying graph.
+	 * @param pl a {@link ProgressLogger}, or {@code null}.
+	 */
 	public static void store(final ArcLabelledImmutableGraph graph, final CharSequence basename, final CharSequence underlyingBasename, final ProgressLogger pl) throws IOException {
 		final OutputBitStream labels = new OutputBitStream(basename + LABELS_EXTENSION, STD_BUFFER_SIZE);
 		final OutputBitStream offsets = new OutputBitStream(basename + LABEL_OFFSETS_EXTENSION, STD_BUFFER_SIZE);
@@ -599,11 +649,7 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 		labels.close();
 		offsets.close();
 
-		final PrintWriter properties = new PrintWriter(new FileOutputStream(basename + ImmutableGraph.PROPERTIES_EXTENSION));
-		properties.println(ImmutableGraph.GRAPHCLASS_PROPERTY_KEY + " = " + BitStreamArcLabelledImmutableGraph.class.getName());
-		properties.println(ArcLabelledImmutableGraph.UNDERLYINGGRAPH_PROPERTY_KEY + " = " + underlyingBasename);
-		properties.println(BitStreamArcLabelledImmutableGraph.LABELSPEC_PROPERTY_KEY + " = " + graph.prototype().toSpec());
-		properties.close();
+		saveProperties(graph.prototype(), basename, underlyingBasename);
 	}
 
 	/** An iterator returning the offsets. */
@@ -622,16 +668,31 @@ public class BitStreamArcLabelledImmutableGraph extends ArcLabelledImmutableGrap
 		public boolean hasNext() {
 			return i <= n;
 		}
+
 		@Override
 		public long nextLong() {
 			i++;
 			try {
 				return off = offsetStream.readLongGamma() + off;
-			}
-			catch (final IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	/**
+	 * Saves the property file for a {@link BitStreamArcLabelledImmutableGraph}.
+	 *
+	 * @param prototype the prototype of the graph labels.
+	 * @param basename the basename of the {@link BitStreamArcLabelledImmutableGraph}.
+	 * @param underlyingBasename the basename of the underlying graph.
+	 */
+	public static void saveProperties(final Label prototype, final CharSequence basename, final CharSequence underlyingBasename) throws FileNotFoundException {
+		final PrintWriter properties = new PrintWriter(new FileOutputStream(basename + ImmutableGraph.PROPERTIES_EXTENSION));
+		properties.println(ImmutableGraph.GRAPHCLASS_PROPERTY_KEY + " = " + BitStreamArcLabelledImmutableGraph.class.getName());
+		properties.println(ArcLabelledImmutableGraph.UNDERLYINGGRAPH_PROPERTY_KEY + " = " + underlyingBasename);
+		properties.println(BitStreamArcLabelledImmutableGraph.LABELSPEC_PROPERTY_KEY + " = " + prototype.toSpec());
+		properties.close();
 	}
 
 	/** Reads an arc-labelled immutable graph and stores it as a {@link BitStreamArcLabelledImmutableGraph}. */

@@ -30,8 +30,8 @@ import java.io.OutputStream;
 import it.unimi.dsi.big.webgraph.labelling.ArcLabelledImmutableGraph;
 import it.unimi.dsi.big.webgraph.labelling.ArcLabelledNodeIterator;
 import it.unimi.dsi.big.webgraph.labelling.ArcLabelledNodeIterator.LabelledArcIterator;
+import it.unimi.dsi.big.webgraph.labelling.BitStreamArcLabelledImmutableGraph;
 import it.unimi.dsi.big.webgraph.labelling.Label;
-import it.unimi.dsi.webgraph.BVGraph;
 
 /** A JUnit test case providing additional assertions
  * for {@linkplain it.unimi.dsi.big.webgraph.ImmutableGraph immutable graphs}.
@@ -81,6 +81,20 @@ public abstract class WebGraphTestCase {
 		new File(basename + BVGraph.OFFSETS_EXTENSION).delete();
 		new File(basename + BVGraph.OFFSETS_BIG_LIST_EXTENSION).delete();
 		new File(basename + ImmutableGraph.PROPERTIES_EXTENSION).delete();
+	}
+
+	/**
+	 * Cleans up a temporary {@link BitStreamArcLabelledImmutableGraph}.
+	 *
+	 * @param basename the basename.
+	 * @param basenameUnderlying the basename of the underlying graph.
+	 */
+
+	public static void deleteLabelledGraph(final String basename, final String basenameUnderlying) {
+		BVGraphTest.deleteGraph(basenameUnderlying);
+		new File(basename + ImmutableGraph.PROPERTIES_EXTENSION).delete();
+		new File(basename + BitStreamArcLabelledImmutableGraph.LABELS_EXTENSION).delete();
+		new File(basename + BitStreamArcLabelledImmutableGraph.LABEL_OFFSETS_EXTENSION).delete();
 	}
 
 	/** Performs a stress-test of an immutable graph. All available methods
