@@ -20,6 +20,8 @@ package it.unimi.dsi.big.webgraph;
 import static it.unimi.dsi.bits.Fast.MSBS_STEP_8;
 import static it.unimi.dsi.bits.Fast.ONES_STEP_4;
 import static it.unimi.dsi.bits.Fast.ONES_STEP_8;
+import static it.unimi.dsi.bits.LongArrayBitVector.bit;
+import static it.unimi.dsi.bits.LongArrayBitVector.word;
 
 import java.io.Closeable;
 import java.io.File;
@@ -210,7 +212,7 @@ public class EFGraph extends ImmutableGraph {
 
 		public int append(final long value, final int width) throws IOException {
 			assert width == Long.SIZE || (-1L << width & value) == 0;
-			buffer |= value << (Long.SIZE - free);
+			buffer |= value << -free;
 			length += width;
 
 			if (width < free) free -= width;
@@ -311,7 +313,7 @@ public class EFGraph extends ImmutableGraph {
 
 		public int append(final long value, final int width) throws IOException {
 			assert width == Long.SIZE || (-1L << width & value) == 0;
-			buffer |= value << (Long.SIZE - free);
+			buffer |= value << -free;
 
 			if (width < free) free -= width;
 			else {
@@ -718,7 +720,7 @@ public class EFGraph extends ImmutableGraph {
 			graph = loadLongBigList(basename + GRAPH_EXTENSION, byteOrder);
 
 			if (pl != null) {
-				pl.count = graph.size64() * (Long.SIZE / Byte.SIZE);
+				pl.count = graph.size64() * Long.BYTES;
 				pl.done();
 			}
 			graphIs.close();
@@ -890,8 +892,8 @@ public class EFGraph extends ImmutableGraph {
 		public LongWordBitReader position(final long position) {
 			if (DEBUG) System.err.println(this + ".position(" + position + ") [buffer = " +  Long.toBinaryString(buffer) + ", filled = " + filled + "]");
 
-			buffer = list.getLong(curr = position / Long.SIZE);
-			final int bitPosition = (int)(position % Long.SIZE);
+			buffer = list.getLong(curr = word(position));
+			final int bitPosition = bit(position);
 			buffer >>>= bitPosition;
 			filled = Long.SIZE - bitPosition;
 
@@ -948,9 +950,9 @@ public class EFGraph extends ImmutableGraph {
 		public long extract(final long position) {
 			if (DEBUG) System.err.println(this + ".extract(" + position + ") [l=" + l + "]");
 
-			final int bitPosition = (int)(position % Long.SIZE);
+			final int bitPosition = bit(position);
 			final int totalOffset = bitPosition + l;
-			final long result = list.getLong(curr = position / Long.SIZE) >>> bitPosition;
+			final long result = list.getLong(curr = word(position)) >>> bitPosition;
 
 			if (totalOffset <= Long.SIZE) {
 				buffer = result >>> l;
@@ -1084,7 +1086,7 @@ public class EFGraph extends ImmutableGraph {
 		}
 
 		private void position(final long position) {
-			window = graph.getLong(curr = position / Long.SIZE) & -1L << (int)(position);
+			window = graph.getLong(curr = word(position)) & -1L << position;
 		}
 
 		private long getNextUpperBits() {
