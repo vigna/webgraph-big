@@ -119,7 +119,7 @@ import it.unimi.dsi.sux4j.mph.GOV3Function;
  * Then, the command
  *
  * <pre>
- *  java it.unimi.dsi.webgraph.ScatteredArcsASCIIGraph example &lt;example.arcs
+ *  java it.unimi.dsi.big.webgraph.ScatteredArcsASCIIGraph example &lt;example.arcs
  * </pre>
  *
  * will produce a compressed graph in {@link it.unimi.dsi.webgraph.BVGraph} format with basename
@@ -199,12 +199,13 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 		}
 
 		/**
-		 * Creates a new hash big set.
+		 * Creates a new hash big map.
 		 *
-		 * <p>The actual table size will be the least power of two greater than
+		 * <p>
+		 * The actual table size will be the least power of two greater than
 		 * <code>expected</code>/<code>f</code>.
 		 *
-		 * @param expected the expected number of elements in the set.
+		 * @param expected the expected number of elements in the map.
 		 * @param f the load factor.
 		 */
 		public Long2LongOpenHashBigMap(final long expected, final float f) {
@@ -314,7 +315,17 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 			maxFill = maxFill(n, f);
 		}
 
-		public void compact() {
+		/**
+		 * Assuming that the map is a minimal perfect hash, returns the list of keys in value order.
+		 *
+		 * <p>
+		 * The map is not usable after this call.
+		 *
+		 * @param tempDir a temporary directory for storing keys and values.
+		 * @return the list of keys in value order.
+		 */
+		public long[][] getIds(final File tempDir) throws IOException {
+			// Here we assume that the map is a minimal perfect hash
 			int base = 0, displ = 0, b = 0, d = 0;
 			for(long i = size; i-- != 0;) {
 				while (! used[base][displ]) base = (base + ((displ = (displ + 1) & segmentMask) == 0 ? 1 : 0)) & baseMask;
@@ -323,6 +334,28 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 				base = (base + ((displ = (displ + 1) & segmentMask) == 0 ? 1 : 0)) & baseMask;
 				b = (b + ((d = (d + 1) & segmentMask) == 0 ? 1 : 0)) & baseMask;
 			}
+
+			// The following weird code minimizes memory usage
+			final File keyFile = File.createTempFile(ScatteredArcsASCIIGraph.class.getSimpleName(), "keys", tempDir);
+			keyFile.deleteOnExit();
+			final File valueFile = File.createTempFile(ScatteredArcsASCIIGraph.class.getSimpleName(), "values", tempDir);
+			valueFile.deleteOnExit();
+
+			BinIO.storeLongs(key, 0, size(), keyFile);
+			BinIO.storeLongs(value, 0, size(), valueFile);
+
+			used = null;
+			key = null;
+			value = null;
+
+			final long[][] key = BinIO.loadLongsBig(keyFile);
+			keyFile.delete();
+			final long[][] value = BinIO.loadLongsBig(valueFile);
+			valueFile.delete();
+
+			final long[][] result = LongBigArrays.newBigArray(size());
+			for (long i = size(); i-- != 0;) BigArrays.set(result, BigArrays.get(value, i), BigArrays.get(key, i));
+			return result;
 		}
 
 		public long size() {
@@ -474,7 +507,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 	public ScatteredArcsASCIIGraph(final InputStream is, final Object2LongFunction<? extends CharSequence> function, Charset charset, final long n, final boolean symmetrize, final boolean noLoops, final int batchSize, final File tempDir, final ProgressLogger pl) throws IOException {
 		@SuppressWarnings("resource")
 		final FastBufferedInputStream fbis = new FastBufferedInputStream(is);
-		Long2LongOpenHashBigMap map = new Long2LongOpenHashBigMap();
+		final Long2LongOpenHashBigMap map = new Long2LongOpenHashBigMap();
 
 		long numNodes = -1;
 		if (charset == null) charset = Charset.forName("ISO-8859-1");
@@ -533,7 +566,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 				}
 
 				s = map.get(sl);
-				if (s == -1) map.put(sl, s = (int)map.size());
+				if (s == -1) map.put(sl, s = map.size());
 
 				if (DEBUG) System.err.println("Parsed source at line " + line + ": " + sl + " => " + s);
 			}
@@ -576,7 +609,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 				}
 
 				t = map.get(tl);
-				if (t == -1) map.put(tl, t = (int)map.size());
+				if (t == -1) map.put(tl, t = map.size());
 
 				if (DEBUG) System.err.println("Parsed target at line " + line + ": " + tl + " => " + t);
 			}
@@ -630,36 +663,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 		source = null;
 		target = null;
 
-		map.compact();
-
-		final File keyFile = File.createTempFile(ScatteredArcsASCIIGraph.class.getSimpleName(), "keys", tempDir);
-		keyFile.deleteOnExit();
-		final File valueFile = File.createTempFile(ScatteredArcsASCIIGraph.class.getSimpleName(), "values", tempDir);
-		valueFile.deleteOnExit();
-
-		BinIO.storeLongs(map.key, 0, map.size(), keyFile);
-		BinIO.storeLongs(map.value, 0, map.size(), valueFile);
-
-		map = null;
-
-		long[][] key = BinIO.loadLongsBig(keyFile);
-		keyFile.delete();
-		long[][] value = BinIO.loadLongsBig(valueFile);
-		valueFile.delete();
-
-		if (function == null) {
-			final long[][] result = LongBigArrays.newBigArray(numNodes);
-			for(int s = value.length; s-- != 0;) {
-				final long[] k = key[s];
-				final long[] v = value[s];
-				for (int d = k.length; d-- != 0;) BigArrays.set(result, v[d], k[d]);
-			}
-			ids = result;
-		}
-
-		key = null;
-		value = null;
-
+		if (function == null) ids = map.getIds(tempDir);
 		batchGraph = new Transform.BatchGraph(function == null ? numNodes : n, pairs, batches);
 	}
 
