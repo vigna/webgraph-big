@@ -56,8 +56,6 @@ import it.unimi.dsi.Util;
 import it.unimi.dsi.bits.Fast;
 import it.unimi.dsi.bits.LongArrayBitVector;
 import it.unimi.dsi.fastutil.io.BinIO;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import it.unimi.dsi.fastutil.longs.LongBigList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongMappedBigList;
@@ -635,14 +633,16 @@ public class EFGraph extends ImmutableGraph {
 		return EFGraph.loadMapped(basename, null);
 	}
 
-	/** An iterator returning the offsets. */
-	private final static class OffsetsLongIterator implements LongIterator {
+	// TODO: remove after making it public
+
+	/** An iterator returning offsets by reading &delta;-encoded gaps. */
+	public final static class OffsetsLongIterator implements LongIterator {
 		private final InputBitStream offsetIbs;
 		private final long n;
 		private long offset;
 		private long i;
 
-		private OffsetsLongIterator(final InputBitStream offsetIbs, final long n) {
+		public OffsetsLongIterator(final InputBitStream offsetIbs, final long n) {
 			this.offsetIbs = offsetIbs;
 			this.n = n;
 		}
@@ -654,25 +654,14 @@ public class EFGraph extends ImmutableGraph {
 
 		@Override
 		public long nextLong() {
-			if (! hasNext()) throw new NoSuchElementException();
+			if (!hasNext()) throw new NoSuchElementException();
 			i++;
 			try {
 				return offset += offsetIbs.readLongDelta();
-			}
-			catch (final IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
-	}
-
-	/** Commodity method for loading a big list of binary longs with specified endianness into a
-	 * {@linkplain LongBigArrays long big array} which just delegates to {@link it.unimi.dsi.webgraph.EFGraph#loadLongBigList(CharSequence, ByteOrder)}.
-	 *
-	 * @param filename the file containing the longs.
-	 * @param byteOrder the endianness of the longs.
-	 * @return a big list of longs containing the longs in <code>filename</code>. */
-	public static LongBigArrayBigList loadLongBigList(final CharSequence filename, final ByteOrder byteOrder) throws IOException {
-		return it.unimi.dsi.webgraph.EFGraph.loadLongBigList(filename, byteOrder);
 	}
 
 	/** Loads a compressed graph file from disk into this graph. Note that this method should
@@ -717,7 +706,7 @@ public class EFGraph extends ImmutableGraph {
 				pl.start("Loading graph...");
 			}
 
-			graph = loadLongBigList(basename + GRAPH_EXTENSION, byteOrder);
+			graph = it.unimi.dsi.webgraph.EFGraph.loadLongBigList(basename + GRAPH_EXTENSION, byteOrder);
 
 			if (pl != null) {
 				pl.count = graph.size64() * Long.BYTES;
