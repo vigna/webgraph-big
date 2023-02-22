@@ -159,8 +159,11 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 		/** The big array of values. */
 		protected long[][] value;
 
-		/** Whether the zero key is present (the value is stored in position {@link #n). */
+		/** Whether the zero key is present (the value is stored in {@link #zeroValue). */
 		protected boolean containsZeroKey;
+
+		/** The value associated with the zero key, if {@link #containsZeroKey}. */
+		protected long zeroValue;
 
 		/** The acceptable load factor. */
 		protected final float f;
@@ -186,7 +189,10 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 		private void initMasks() {
 			mask = n - 1;
 			baseMask = key.length - 1;
-			segmentMask = baseMask == 0 ? (int)(n - 1) : BigArrays.SEGMENT_SIZE - 1;
+			/* Note that either we have more than one segment, and in this case all segments
+			 * are BigArrays.SEGMENT_SIZE long, or we have exactly one segment whose length
+			 * is a power of two. */
+			segmentMask = key[0].length - 1;
 		}
 
 		/**
@@ -205,8 +211,8 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 			this.f = f;
 			n = bigArraySize(expected, f);
 			maxFill = maxFill(n, f);
-			key = LongBigArrays.newBigArray(n + 1);
-			value = LongBigArrays.newBigArray(n + 1);
+			key = LongBigArrays.newBigArray(n);
+			value = LongBigArrays.newBigArray(n);
 			initMasks();
 		}
 
@@ -227,8 +233,8 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 		 */
 		public long getNode(final long id) {
 			if (id == 0) {
-				if (containsZeroKey) return BigArrays.get(value, n);
-				BigArrays.set(value, n, size);
+				if (containsZeroKey) return zeroValue;
+				zeroValue = size;
 				containsZeroKey = true;
 			} else {
 
@@ -256,11 +262,11 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 		protected void rehash(final long newN) {
 			final long key[][] = this.key;
 			final long[][] value = this.value;
-			final long newKey[][] = LongBigArrays.newBigArray(newN + 1);
-			final long newValue[][] = LongBigArrays.newBigArray(newN + 1);
+			final long newKey[][] = LongBigArrays.newBigArray(newN);
+			final long newValue[][] = LongBigArrays.newBigArray(newN);
 			final long newMask = newN - 1;
 			final int newBaseMask = newKey.length - 1;
-			final int newSegmentMask = newBaseMask == 0 ? (int)(newN - 1) : BigArrays.SEGMENT_SIZE - 1;
+			final int newSegmentMask = newKey[0].length - 1;
 			final long realSize = containsZeroKey ? size - 1 : size;
 
 			int base = 0, displ = 0;
@@ -284,8 +290,6 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 
 				base = (base + ((displ = (displ + 1) & segmentMask) == 0 ? 1 : 0));
 			}
-
-			BigArrays.set(newValue, newN, BigArrays.get(value, n));
 
 			this.n = newN;
 			this.key = newKey;
@@ -317,7 +321,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 
 			if (containsZeroKey) {
 				key[b][d] = 0;
-				value[b][d] = BigArrays.get(value, n);
+				value[b][d] = zeroValue;
 			}
 
 			// The following weird code minimizes memory usage
