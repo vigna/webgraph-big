@@ -33,6 +33,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongFunction;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
 import it.unimi.dsi.webgraph.ArrayListMutableGraph;
 import it.unimi.dsi.webgraph.Transform;
+import it.unimi.dsi.webgraph.examples.ErdosRenyiGraph;
 
 public class ScatteredArcsASCIIGraphTest extends WebGraphTestCase {
 
@@ -173,5 +174,23 @@ public class ScatteredArcsASCIIGraphTest extends WebGraphTestCase {
 		map.put("1", 1);
 		map.put("2", 2);
 		assertEquals(ImmutableGraph.wrap(ArrayListMutableGraph.newCompleteGraph(3, false).immutableView()), new ScatteredArcsASCIIGraph(new FastByteArrayInputStream("0 1\n2 0".getBytes("ASCII")), map, null, 2));
+	}
+
+	@Test
+	public void testLarge() throws IOException {
+		final ErdosRenyiGraph erdosRenyiGraph = new ErdosRenyiGraph(100000, .0005, 0, true);
+		final ImmutableGraph bigErdosRenyiGraph = ImmutableGraph.wrap(erdosRenyiGraph);
+		final StringBuilder b = new StringBuilder();
+		for (final NodeIterator nodeIterator = bigErdosRenyiGraph.nodeIterator(); nodeIterator.hasNext();) {
+			final int curr = (int)nodeIterator.nextLong();
+			final LazyLongIterator successors = nodeIterator.successors();
+			for (long s; (s = successors.nextLong()) != -1;) b.append(-curr).append('\t').append(-s).append('\n');
+		}
+
+		final ScatteredArcsASCIIGraph g = new ScatteredArcsASCIIGraph(new FastByteArrayInputStream(b.toString().getBytes("ASCII")), false, false, 10000, null, null);
+		final int[] perm = new int[(int)g.numNodes()];
+		for (int i = 0; i < g.numNodes(); i++) perm[i] = (int)-BigArrays.get(g.ids, i);
+
+		assertEquals(erdosRenyiGraph, Transform.map(new ArrayListMutableGraph(ImmutableGraph.wrap(g)).immutableView(), perm));
 	}
 }
