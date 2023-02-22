@@ -152,7 +152,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 	/** The big-array list of identifiers in order of appearance. */
 	public long[][] ids;
 
-	public static class Id2Node implements Hash {
+	public static class Id2NodeMap implements Hash {
 		/** The big array of keys. */
 		protected long[][] key;
 
@@ -199,7 +199,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 		 * @param expected the expected number of elements in the map.
 		 * @param f the load factor.
 		 */
-		public Id2Node(final long expected, final float f) {
+		public Id2NodeMap(final long expected, final float f) {
 			if (f <= 0 || f > 1) throw new IllegalArgumentException("Load factor must be greater than 0 and smaller than or equal to 1");
 			if (n < 0) throw new IllegalArgumentException("The expected number of elements must be nonnegative");
 			this.f = f;
@@ -215,7 +215,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 		 * and {@link Hash#DEFAULT_LOAD_FACTOR} as load factor.
 		 */
 
-		public Id2Node() {
+		public Id2NodeMap() {
 			this(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR);
 		}
 
@@ -491,7 +491,7 @@ public class ScatteredArcsASCIIGraph extends ImmutableSequentialGraph {
 	public ScatteredArcsASCIIGraph(final InputStream is, final Object2LongFunction<? extends CharSequence> function, Charset charset, final long n, final boolean symmetrize, final boolean noLoops, final int batchSize, final File tempDir, final ProgressLogger pl) throws IOException {
 		@SuppressWarnings("resource")
 		final FastBufferedInputStream fbis = new FastBufferedInputStream(is);
-		final Id2Node map = new Id2Node();
+		final Id2NodeMap map = new Id2NodeMap();
 
 		long numNodes = -1;
 		if (charset == null) charset = Charset.forName("ISO-8859-1");
