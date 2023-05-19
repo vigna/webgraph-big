@@ -89,7 +89,7 @@ import it.unimi.dsi.webgraph.GraphClassParser;
 
 /**
  * An immutable graph represented using the techniques described in
- * &ldquo;<a href="http://vigna.dsi.unimi.it/papers.php#BoVWFI">The WebGraph Framework I:
+ * &ldquo;<a href="http://vigna.di.unimi.it/papers.php#BoVWFI">The WebGraph Framework I:
  * Compression Techniques</a>&rdquo;, by Paolo Boldi and Sebastiano Vigna, in <i>Proc&#46; of the
  * Thirteenth World&ndash;Wide Web Conference</i>, pages 595&minus;601, 2004, ACM Press.
  *
@@ -124,7 +124,7 @@ import it.unimi.dsi.webgraph.GraphClassParser;
  *
  * <P>
  * This class stores a graph as an
- * <a href="http://dsiutils.dsi.unimi.it/docs/it/unimi/dsi/io/InputBitStream.html">bit stream</a>.
+ * <a href="http://dsiutils.di.unimi.it/docs/it/unimi/dsi/io/InputBitStream.html">bit stream</a>.
  * The bit stream format depends on a number of parameters and encodings that can be mixed
  * orthogonally. The parameters are:
  *
