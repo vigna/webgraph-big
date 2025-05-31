@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"it.unimi.dsi.big.webgraph"},{"l":"it.unimi.dsi.big.webgraph.algo"},{"l":"it.unimi.dsi.big.webgraph.examples"},{"l":"it.unimi.dsi.big.webgraph.labelling"},{"l":"it.unimi.dsi.big.webgraph.test"}];updateSearchResults();
